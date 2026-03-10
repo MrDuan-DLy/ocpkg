@@ -353,7 +353,7 @@ async function runCheckAll(options) {
 
     if (!options.json) process.stdout.write(`  Checking ${pkg.name}...`);
 
-    const pkgPath = expandHome(pkg.path);
+    const pkgPath = expandHome(pkg.gitRoot || pkg.path);
     const remote = pkg.remoteName || 'origin';
     const branch = pkg.branch || 'master';
 
@@ -439,7 +439,7 @@ export async function runCheck(name, options) {
     process.exit(1);
   }
 
-  const pkgPath = expandHome(pkg.path);
+  const pkgPath = expandHome(pkg.gitRoot || pkg.path);
   const remote = pkg.remoteName || 'origin';
   const branch = pkg.branch || 'master';
 

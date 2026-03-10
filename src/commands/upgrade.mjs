@@ -78,7 +78,7 @@ export async function runUpgrade(name, options) {
     process.exit(1);
   }
 
-  const pkgPath = expandHome(pkg.path);
+  const pkgPath = expandHome(pkg.gitRoot || pkg.path);
   const openclaw = findOpenclawBin();
   const TOTAL = pkg.requiresJitiClear && pkg.requiresRestart ? 7 :
     pkg.requiresJitiClear || pkg.requiresRestart ? 6 : 5;

@@ -65,7 +65,7 @@ export async function runRollback(name, options) {
   }
 
   const { manifest } = backup;
-  const pkgPath = expandHome(pkg.path);
+  const pkgPath = expandHome(pkg.gitRoot || pkg.path);
   const openclaw = findOpenclawBin();
 
   const currentVersion = pkg.installedVersion || `@${pkg.installedCommit}`;

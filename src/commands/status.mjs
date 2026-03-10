@@ -47,7 +47,7 @@ export async function runStatus(options) {
   const updatedRegistry = { ...registry, packages: { ...registry.packages } };
 
   for (const pkg of pkgs) {
-    const pkgPath = expandHome(pkg.path);
+    const pkgPath = expandHome(pkg.gitRoot || pkg.path);
 
     let fetchOk = false;
     let behind = 0;

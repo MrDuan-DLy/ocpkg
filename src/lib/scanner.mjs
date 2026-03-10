@@ -1,6 +1,6 @@
 import { readdir, readFile, stat } from 'fs/promises';
-import { existsSync } from 'fs';
-import { join } from 'path';
+import { existsSync, realpathSync } from 'fs';
+import { join, dirname, parse } from 'path';
 import { PLUGINS_DIR, SKILLS_DIR } from './paths.mjs';
 import { simpleGit } from 'simple-git';
 
@@ -80,6 +80,28 @@ async function getGitInfo(dir) {
   }
 }
 
+// Walk up from dir to find the nearest .git root (for symlinks into subdirs)
+// Only returns a root if it has a remote AND the resolved dir is a direct child
+// (prevents workspace/.git from claiming all subdirectories)
+async function findGitRoot(dir) {
+  const resolved = realpathSync(dir);
+  // Only check the immediate parent — don't walk further up
+  // This handles: symlink -> /project/skill/ where .git is at /project/
+  const parent = dirname(resolved);
+  if (await hasDirectory(parent, '.git')) {
+    // Verify it has a real remote (not just the workspace repo)
+    try {
+      const sg = simpleGit(parent);
+      const remotes = await sg.getRemotes(true);
+      const origin = remotes.find(r => r.name === 'origin');
+      if (origin && origin.refs && origin.refs.fetch) {
+        return parent;
+      }
+    } catch {}
+  }
+  return null;
+}
+
 async function scanDir(directory, type) {
   if (!existsSync(directory)) return [];
 
@@ -93,7 +115,19 @@ async function scanDir(directory, type) {
     const dir = join(directory, entry.name);
     const name = entry.name;
 
-    const isGit = await hasDirectory(dir, '.git');
+    let isGit = await hasDirectory(dir, '.git');
+    let gitDir = dir;
+
+    // If no .git in the directory itself AND it's a symlink, check if the
+    // symlink target's parent is a git repo (e.g. symlink -> project/skill/)
+    if (!isGit && entry.isSymbolicLink()) {
+      const gitRoot = await findGitRoot(dir);
+      if (gitRoot) {
+        isGit = true;
+        gitDir = gitRoot;
+      }
+    }
+
     if (!isGit) {
       results.push({
         name,
@@ -115,8 +149,8 @@ async function scanDir(directory, type) {
       continue;
     }
 
-    const gitInfo = await getGitInfo(dir);
-    const pkgJson = await readPackageJson(dir);
+    const gitInfo = await getGitInfo(gitDir);
+    const pkgJson = await readPackageJson(gitDir);
     const tsFiles = await hasTsFiles(dir);
     const hasDepsInPkg = pkgJson && (
       Object.keys(pkgJson.dependencies || {}).length > 0 ||
