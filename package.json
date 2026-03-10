@@ -1,0 +1,18 @@
+{
+  "name": "ocpkg",
+  "version": "1.1.0",
+  "description": "OpenClaw Package Manager — manage plugins and skills installed from GitHub",
+  "type": "module",
+  "bin": {
+    "ocpkg": "./bin/ocpkg.mjs"
+  },
+  "scripts": {
+    "start": "node bin/ocpkg.mjs"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.3",
+    "commander": "^12.1.0",
+    "simple-git": "^3.27.0"
+  }
+}
